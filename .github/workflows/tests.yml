@@ -1,0 +1,38 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run self-test
+        run: python constrained_bayesian_optimization_cstr.py --self-test
+
+      - name: Run regression suite
+        run: python -m unittest discover -s tests -v
+
+      - name: Run short BO smoke benchmark
+        run: |
+          python constrained_bayesian_optimization_cstr.py \
+            --seed 42 \
+            --initial-points 10 \
+            --bo-iterations 8 \
+            --candidate-pool 512 \
+            --reference-sobol-power 10
